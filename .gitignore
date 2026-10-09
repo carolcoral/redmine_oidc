@@ -1,0 +1,17 @@
+# 测试与覆盖率产物
+coverage/
+tmp/
+log/
+*.log
+
+# 依赖与本地环境
+.bundle/
+vendor/bundle/
+node_modules/
+.run.env
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+.DS_Store

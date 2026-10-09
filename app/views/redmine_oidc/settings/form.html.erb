@@ -1,0 +1,87 @@
+<%
+  settings = RedmineOidc::Settings.current
+  callback_url = RedmineOidc::CallbackUrl.build(request) rescue ''
+%>
+<fieldset class="box tabular">
+  <legend><%= l(:label_redmine_oidc_general) %></legend>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_enabled)) %>
+    <%= hidden_field_tag 'settings[enabled]', '0', id: nil %>
+    <%= check_box_tag 'settings[enabled]', '1', RedmineOidc::Settings.truthy?(settings['enabled'] || '0') %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_issuer)) %>
+    <%= text_field_tag 'settings[issuer]', settings['issuer'], size: 60, placeholder: 'https://sso.example.com' %>
+    <em class="info"><%= l(:text_redmine_oidc_issuer_hint) %></em>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_client_id)) %>
+    <%= text_field_tag 'settings[client_id]', settings['client_id'], size: 60 %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_client_secret)) %>
+    <%= password_field_tag 'settings[client_secret]', '', size: 60, autocomplete: 'new-password',
+                           placeholder: settings['client_secret'].present? ? l(:text_redmine_oidc_secret_kept) : '' %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_redirect_uri)) %>
+    <%= text_field_tag 'settings[redirect_uri]', settings['redirect_uri'], size: 60 %>
+    <em class="info"><%= l(:text_redmine_oidc_redirect_uri_hint, url: callback_url) %></em>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_scopes)) %>
+    <%= text_field_tag 'settings[scopes]', settings['scopes'], size: 60 %>
+  </p>
+</fieldset>
+
+<fieldset class="box tabular">
+  <legend><%= l(:label_redmine_oidc_users) %></legend>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_button_label)) %>
+    <%= text_field_tag 'settings[button_label]', settings['button_label'], size: 30 %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_auto_create_user)) %>
+    <%= hidden_field_tag 'settings[auto_create_user]', '0', id: nil %>
+    <%= check_box_tag 'settings[auto_create_user]', '1', RedmineOidc::Settings.truthy?(settings['auto_create_user'] || '0') %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_update_user_attributes)) %>
+    <%= hidden_field_tag 'settings[update_user_attributes]', '0', id: nil %>
+    <%= check_box_tag 'settings[update_user_attributes]', '1', RedmineOidc::Settings.truthy?(settings['update_user_attributes'] || '0') %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_default_roles)) %>
+    <%= select_tag 'settings[default_role_ids][]',
+                   options_from_collection_for_select(Role.givable.sorted, :id, :name, RedmineOidc::Settings.default_role_ids),
+                   multiple: true, size: 5 %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_admin_group)) %>
+    <%= text_field_tag 'settings[admin_group]', settings['admin_group'], size: 30 %>
+    <em class="info"><%= l(:text_redmine_oidc_admin_group_hint) %></em>
+  </p>
+</fieldset>
+
+<fieldset class="box tabular">
+  <legend><%= l(:label_redmine_oidc_behaviour) %></legend>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_auto_redirect)) %>
+    <%= hidden_field_tag 'settings[auto_redirect]', '0', id: nil %>
+    <%= check_box_tag 'settings[auto_redirect]', '1', RedmineOidc::Settings.truthy?(settings['auto_redirect'] || '0') %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_end_session_enabled)) %>
+    <%= hidden_field_tag 'settings[end_session_enabled]', '0', id: nil %>
+    <%= check_box_tag 'settings[end_session_enabled]', '1', RedmineOidc::Settings.truthy?(settings['end_session_enabled'] || '0') %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_verify_ssl)) %>
+    <%= hidden_field_tag 'settings[verify_ssl]', '0', id: nil %>
+    <%= check_box_tag 'settings[verify_ssl]', '1', RedmineOidc::Settings.truthy?(settings['verify_ssl'] || '0') %>
+  </p>
+  <p>
+    <%= content_tag(:label, l(:field_redmine_oidc_timeout)) %>
+    <%= text_field_tag 'settings[timeout]', settings['timeout'], size: 6 %>
+  </p>
+</fieldset>

@@ -1,0 +1,28 @@
+<h2><%= l(:label_redmine_oidc_settings) %></h2>
+
+<%= form_tag({ controller: 'redmine_oidc/settings', action: 'update' }, method: :post) do %>
+  <%= render partial: 'redmine_oidc/settings/form' %>
+  <%= submit_tag l(:button_save) %>
+  <button type="button" id="oidc-test-connection"><%= l(:button_redmine_oidc_test_connection) %></button>
+<% end %>
+
+<div id="oidc-test-result" style="margin-top: 1em;"></div>
+
+<script>
+  (function () {
+    var button = document.getElementById('oidc-test-connection');
+    var result = document.getElementById('oidc-test-result');
+    if (!button || !result) { return; }
+    button.addEventListener('click', function () {
+      result.textContent = '<%= j l(:text_redmine_oidc_testing) %>';
+      fetch('<%= redmine_oidc_settings_test_path %>', { headers: { Accept: 'application/json' } })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          result.textContent = data.success
+            ? '<%= j l(:text_redmine_oidc_test_success) %>: ' + data.issuer + ' (' + data.jwks_keys + ' keys)'
+            : '<%= j l(:text_redmine_oidc_test_failure) %>: ' + data.message;
+        })
+        .catch(function (error) { result.textContent = String(error); });
+    });
+  })();
+</script>

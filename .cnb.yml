@@ -1,0 +1,78 @@
+# redmine_oidc 插件流水线。
+#
+# 目标：
+#   1. 任何分支/PR 上跑单元测试并强制行覆盖率 ≥ 80%；
+#   2. 合并进 main 后自动部署「正式环境 Redmine」（含本插件），
+#      部署前先在容器里重跑测试与迁移校验，避免把坏代码推上生产。
+#
+# 正式环境凭据放在组织密钥仓库中，通过 imports 注入；PR 事件不读取密钥，
+# 避免 fork 构建把生产凭据读走。
+
+# 复用片段：以 `.` 开头表示模板，不会被当成真实流水线执行。
+
+# 质量阀门：测试 + 覆盖率（本地与 CI 同口径，均走 scripts/quality-gate.sh）。
+.quality-gate: &quality-gate
+  name: plugin-quality-gate
+  docker:
+    build: .cnb/Dockerfile
+    volumes:
+      - /root/.cache/bundle:copy-on-write
+  stages:
+    - name: test
+      script: bash scripts/quality-gate.sh
+    - name: plugin-coverage
+      type: testing:coverage
+      options:
+        key: plugin
+        name: 插件覆盖率
+        pattern: "**/coverage/.last_run.json"
+        breakIfNoCoverage: true
+
+main:
+  push:
+    # ---- 质量阀门 ----
+    - *quality-gate
+
+    # ---- 正式环境自动部署 ----
+    - name: deploy-production
+      # 部署串行化：同一时刻只保留最新一次排队，避免多次推送相互覆盖。
+      lock:
+        key: deploy-redmine-production
+        wait: true
+        cancel-in-wait: true
+      docker:
+        build: .cnb/Dockerfile
+      imports:
+        # 正式环境凭据（SSH 私钥、主机、Redmine 目录、站点地址）集中管理。
+        - https://cnb.cool/xindu.site/secrets/-/blob/main/redmine-oidc-production.yml
+      stages:
+        # 部署前再跑一次测试，防止 main 上出现「测试挂了但仍然部署」。
+        - name: test
+          script: bash scripts/quality-gate.sh
+        - name: validate-migration
+          script: bash scripts/check-migration.sh
+        - name: deploy
+          script: bash scripts/deploy-production.sh
+        - name: smoke-test
+          script: bash scripts/smoke-test.sh
+
+  pull_request:
+    # PR 上只验证，不部署。
+    - *quality-gate
+
+  pull_request.merged:
+    - name: on-merge
+      docker:
+        build: .cnb/Dockerfile
+      stages:
+        - name: test
+          script: bash scripts/quality-gate.sh
+        - name: record-merge
+          script: bash scripts/notify-merge.sh
+
+# 其它分支与仓库级事件：只跑质量阀门。
+"$":
+  push:
+    - *quality-gate
+  pull_request:
+    - *quality-gate

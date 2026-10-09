@@ -1,0 +1,7 @@
+<h2><%= l(:label_redmine_oidc_login_failed) %></h2>
+
+<div class="flash error">
+  <%= @message.presence || l(:error_oidc_login_failed) %>
+</div>
+
+<p><%= link_to l(:button_back), signin_path %></p>

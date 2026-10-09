@@ -1,0 +1,8 @@
+<% if oidc_login_available? %>
+  <div class="oidc-login">
+    <%= link_to oidc_button_label,
+                oidc_login_path(back_url: params[:back_url] || request.fullpath),
+                class: 'oidc-login-button',
+                id: 'oidc-login-button' %>
+  </div>
+<% end %>
