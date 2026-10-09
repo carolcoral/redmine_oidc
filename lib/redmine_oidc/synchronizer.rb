@@ -88,12 +88,22 @@ module RedmineOidc
     def apply_admin_group(user, group = Settings['admin_group'].to_s.strip)
       return if user.nil? || group.blank?
       return unless @claims.system_admin? || @claims.system_role == 'admin'
-      return unless group.to_s.casecmp(@claims.system_name.to_s).zero? ||
-                    group.to_s.casecmp('admin').zero?
+      return unless admin_group_matches?(group)
       return if user.admin?
 
       user.admin = true
       user.save(validate: false)
+    end
+
+    # Matches the configured group against every identifier the provider sends.
+    # SADP claims permissions through role assignment and then omits
+    # `system_name`, exposing only the role names (`oidc_roles`); matching on
+    # `system_name` alone would silently disable promotion on that path.
+    def admin_group_matches?(group)
+      group = group.to_s
+      return true if group.casecmp('admin').zero?
+
+      @claims.group_names.any? { |name| group.casecmp(name.to_s).zero? }
     end
 
     def assign_default_roles(user)

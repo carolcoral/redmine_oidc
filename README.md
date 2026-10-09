@@ -65,7 +65,7 @@ plugin will actually send.
 | Create users on first login | Off means only pre-existing accounts can sign in |
 | Update name and email from the provider | Local edits are preserved when off |
 | Default roles for new users | Applied only when creating an account |
-| Provider admin group | Must match the provider's `system_name`; blank disables promotion |
+| Provider admin group | Must match the provider's `system_name` or any `oidc_roles` name; blank disables promotion |
 
 ### Behaviour
 
@@ -98,7 +98,7 @@ does not break the association.
 - ID tokens are verified against the live JWKS. `alg: none` and HMAC-signed tokens are rejected outright.
 - Auto-redirect (`Redirect the login page to the provider`) removes the local form from view. Set
   `hide_local_login` in the settings hash if you also want to reject password logins for non-admins.
-- Admin promotion requires **both** a configured group name **and** a matching `system_name` claim. Leaving the group blank makes that path dead code.
+- Admin promotion requires a configured group name **and** a matching `system_name` or `oidc_roles` entry (SADP's role path omits `system_name`). Leaving the group blank makes that path dead code.
 - Passwords are generated as 32 random bytes for provisioned accounts, so OIDC-only users cannot be brute-forced locally.
 
 ## Development

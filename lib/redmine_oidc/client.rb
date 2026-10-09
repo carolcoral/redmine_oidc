@@ -122,7 +122,7 @@ module RedmineOidc
       request['Content-Type'] = 'application/x-www-form-urlencoded'
       request['Accept'] = 'application/json'
       if basic_auth
-        request.basic_auth(URI.encode_www_form_component(@client_id), URI.encode_www_form_component(@client_secret))
+        request.basic_auth(@client_id, @client_secret)
       end
       request.body = URI.encode_www_form(body)
 

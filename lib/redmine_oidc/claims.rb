@@ -55,6 +55,19 @@ module RedmineOidc
       value('system_name')
     end
 
+    # SADP role names carried by the token (`oidc_roles`). When permissions are
+    # claimed through role assignment the provider omits `system_name` and only
+    # emits the role names, so admin-group matching must consider these too.
+    def role_names
+      Array(raw['oidc_roles']).filter_map { |role| role.is_a?(String) ? role.strip.presence : nil }
+    end
+
+    # Every identifier a configured admin group may match against: the provider
+    # system name plus any assigned role names.
+    def group_names
+      [system_name, *role_names].compact
+    end
+
     def system_permissions
       Array(raw['system_permissions'])
     end

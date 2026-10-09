@@ -25,7 +25,7 @@ en:
   text_redmine_oidc_issuer_hint: "Public base URL of the provider (no endpoint path). Example: https://sso.example.com"
   text_redmine_oidc_redirect_uri_hint: "Register exactly this URL at the provider. Defaults to %{url}"
   text_redmine_oidc_secret_kept: "leave blank to keep the current secret"
-  text_redmine_oidc_admin_group_hint: "Leave blank to never promote external administrators."
+  text_redmine_oidc_admin_group_hint: "Match the provider system name or an assigned role name. Leave blank to never promote external administrators."
   text_redmine_oidc_testing: "Testing connectivity..."
   text_redmine_oidc_test_success: "Connection OK"
   text_redmine_oidc_test_failure: "Connection failed"

@@ -68,6 +68,29 @@ class ClientTest < Minitest::Test
     assert_requested stub
   end
 
+  # Credentials must reach Basic auth verbatim: providers such as Keycloak,
+  # Authentik and Azure AD issue secrets containing `+`, `/`, `=` and `%`,
+  # which form-encoding would corrupt into `invalid_client`.
+  def test_does_not_form_encode_special_characters_in_client_credentials
+    secret = 'a+b/c==d%e f'
+    special_client = RedmineOidc::Client.new(
+      issuer: 'https://idp.example.com',
+      client_id: 'redmine+app',
+      client_secret: secret,
+      scopes: %w[openid],
+      verify_ssl: true,
+      timeout: 5
+    )
+
+    expected = "Basic #{Base64.strict_encode64("redmine+app:#{secret}")}"
+    stub = stub_request(:post, 'https://idp.example.com/oauth2/token')
+           .with(headers: { 'Authorization' => expected })
+           .to_return(status: 200, body: '{"access_token":"a"}')
+
+    special_client.exchange_code(code: 'abc', redirect_uri: 'https://redmine.example.com/oidc/callback')
+    assert_requested stub
+  end
+
   def test_raises_on_a_failed_token_exchange
     stub_request(:post, 'https://idp.example.com/oauth2/token')
       .to_return(status: 400, body: '{"error":"invalid_grant"}')

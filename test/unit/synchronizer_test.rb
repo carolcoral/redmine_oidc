@@ -293,4 +293,43 @@ class SynchronizerTest < Minitest::Test
       refute result.user.admin?
     end
   end
+
+  # SADP's role-based permission path emits `system_admin` / `oidc_roles` but
+  # no `system_name`. Matching only against `system_name` would silently
+  # disable promotion on that path.
+  def test_grants_admin_via_role_name_when_system_name_is_absent
+    with_settings('admin_group' => 'Redmine Admin', 'auto_create_user' => '1') do
+      result = RedmineOidc::Synchronizer.new(
+        claims('system_admin' => true, 'system_role' => 'admin', 'oidc_roles' => ['Redmine Admin'])
+      ).call
+      assert result.user.admin?
+    end
+  end
+
+  def test_role_name_matching_is_case_insensitive
+    with_settings('admin_group' => 'redmine admin', 'auto_create_user' => '1') do
+      result = RedmineOidc::Synchronizer.new(
+        claims('system_admin' => true, 'oidc_roles' => ['Redmine Admin'])
+      ).call
+      assert result.user.admin?
+    end
+  end
+
+  def test_does_not_grant_admin_for_an_unlisted_role
+    with_settings('admin_group' => 'Redmine Admin', 'auto_create_user' => '1') do
+      result = RedmineOidc::Synchronizer.new(
+        claims('system_admin' => true, 'system_role' => 'admin', 'oidc_roles' => ['Auditor'])
+      ).call
+      refute result.user.admin?
+    end
+  end
+
+  def test_does_not_grant_admin_when_role_path_lacks_admin_flag
+    with_settings('admin_group' => 'Redmine Admin', 'auto_create_user' => '1') do
+      result = RedmineOidc::Synchronizer.new(
+        claims('system_role' => 'user', 'oidc_roles' => ['Redmine Admin'])
+      ).call
+      refute result.user.admin?
+    end
+  end
 end
