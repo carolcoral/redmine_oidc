@@ -33,7 +33,10 @@
 | 客户端标识 | 上一步的 `client_id` |
 | 客户端密钥 | 上一步的 `client_secret` |
 | 授权范围 | `openid profile email` |
-| 服务端管理员组 | 填第 1 步的系统名（希望 SADP 管理员在 Redmine 里也是管理员时） |
+| 服务端管理员组 | 见下方「四、权限与管理员」，填系统名或角色名 |
+
+> SADP 的 `client_secret` 由平台生成，是 base64url 字符集（字母数字加 `-` `_`）。
+> 插件按标准 Basic 认证原样发送，不做二次转义。
 
 保存后点「测试连接」，应当看到 `连接正常 ... (N keys)`。若报 issuer 不匹配，
 说明插件配的地址与 SADP 认定的地址不一致。
@@ -56,18 +59,29 @@ SADP 支持按请求地址动态推导 issuer。两种部署方式：
 
 ## 四、权限与管理员
 
-SADP 会下发 `system_*` 系列声明。插件的处理方式：
+SADP 会下发 `system_*` 系列声明，但**两条下发路径的字段并不相同**：
 
-| 声明 | 插件行为 |
-|---|---|
-| `system_admin: true` 且 `system_name` 等于配置的组名 | 把该用户提升为 Redmine 管理员 |
-| `system_role: "admin"` | 同上（兼容口径） |
-| 组名留空 | 永远不提升，这是默认值 |
-| 声明缺失 | 按普通用户处理，不拒绝登录 |
+| 路径 | 何时触发 | 关键声明 |
+|---|---|---|
+| 角色路径 | 在「用户管理」给用户分配了 OIDC 角色 | `system_admin` / `system_role` / `system_permissions` / `_pages` / `_page_tree` / `oidc_roles`，**但没有 `system_name`** |
+| 逐系统路径 | 在「接入系统权限」按系统纳管 | 除上述外**额外**带 `system_name` / `system_roles` |
+
+插件的管理员提升判定（三者同时满足）：
+
+1. `system_admin == true` 或 `system_role == "admin"`；
+2. **配置了**「服务端管理员组」（留空 = 永远不提升，默认值）；
+3. 组名与 `system_name` **或** `oidc_roles` 中任一角色名大小写不敏感相等
+   （`admin` 为保留值，始终命中）。
+
+第 3 条同时比对系统名与角色名，是因为角色路径**不下发 `system_name`**——
+若只比对系统名，走角色路径的管理员永远无法提升。因此：
+
+- 想让 SADP 里某个角色的人在 Redmine 也是管理员 → 组名填**角色名**；
+- 想按系统整体放行 → 组名填**系统名**（仅逐系统路径有效）。
 
 插件**不使用** `system_permissions` / `system_pages` 做功能级管控——
 Redmine 的权限模型是角色制，按页面码逐点映射既不可靠也难以维护。
-需要精细权限时，用 SADP 的组映射到 Redmine 角色（`default_role_ids`）。
+需要精细权限时，用 SADP 的角色映射到 Redmine 角色（`default_role_ids`）。
 
 ## 五、正式环境部署
 

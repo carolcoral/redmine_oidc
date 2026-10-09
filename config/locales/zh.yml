@@ -25,7 +25,7 @@ zh:
   text_redmine_oidc_issuer_hint: "服务端对外访问地址，不要带端点路径，例如 https://sso.example.com"
   text_redmine_oidc_redirect_uri_hint: "需在服务端逐字节登记该地址，默认值为 %{url}"
   text_redmine_oidc_secret_kept: "留空表示保留当前密钥"
-  text_redmine_oidc_admin_group_hint: "留空表示不自动授予外部管理员权限。"
+  text_redmine_oidc_admin_group_hint: "填写服务端系统名或已分配的角色名。留空表示不自动授予外部管理员权限。"
   text_redmine_oidc_testing: "正在测试连通性..."
   text_redmine_oidc_test_success: "连接正常"
   text_redmine_oidc_test_failure: "连接失败"

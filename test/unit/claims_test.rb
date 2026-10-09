@@ -69,4 +69,26 @@ class ClaimsTest < Minitest::Test
     assert_nil claims.subject
     refute claims.managed?
   end
+
+  # SADP claims permissions through role assignment and then omits
+  # `system_name`, exposing only `oidc_roles` (see OAuth2ServerConfig
+  # `claimRolePermissions`). Claims must surface those role names.
+  def test_reads_role_names_from_oidc_roles
+    claims = RedmineOidc::Claims.new('oidc_roles' => ['Redmine Admin', ' Auditor '])
+    assert_equal ['Redmine Admin', 'Auditor'], claims.role_names
+  end
+
+  def test_role_names_ignore_blank_and_non_string_entries
+    claims = RedmineOidc::Claims.new('oidc_roles' => ['  ', nil, 42, 'Ops'])
+    assert_equal ['Ops'], claims.role_names
+  end
+
+  def test_group_names_combines_system_name_and_roles
+    claims = RedmineOidc::Claims.new('system_name' => 'Redmine', 'oidc_roles' => ['Redmine Admin'])
+    assert_equal ['Redmine', 'Redmine Admin'], claims.group_names
+  end
+
+  def test_group_names_is_empty_without_system_name_or_roles
+    assert_empty RedmineOidc::Claims.new({}).group_names
+  end
 end

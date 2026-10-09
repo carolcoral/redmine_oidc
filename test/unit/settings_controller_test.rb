@@ -168,8 +168,12 @@ class SettingsControllerTest < Minitest::Test
   def test_update_reports_errors_without_raising
     c = controller_with('settings' => { 'issuer' => 'https://x' })
     # Force the merge to blow up and ensure the rescue path is exercised.
-    RedmineOidc::SettingsForm.stub(:merge, ->(*) { raise 'boom' }) do
+    original = RedmineOidc::SettingsForm.method(:merge)
+    RedmineOidc::SettingsForm.singleton_class.send(:define_method, :merge) { |*| raise 'boom' }
+    begin
       c.update
+    ensure
+      RedmineOidc::SettingsForm.singleton_class.send(:define_method, :merge, original)
     end
 
     assert_equal 'boom', c.flash[:error]
